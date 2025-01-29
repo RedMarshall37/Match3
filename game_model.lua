@@ -1,5 +1,5 @@
 local crystal = require("crystal")
-
+---@class GameModel 
 GameModel = {}
 function GameModel:new()
     local private = {}
@@ -282,6 +282,7 @@ function GameModel:new()
                 -- заполнение поля заново
                 local index = 1
                 for i = 1, private.size do
+                    
                     for j = 1, private.size do
                         private.board[i][j] = flat_board[index]
                         index = index + 1

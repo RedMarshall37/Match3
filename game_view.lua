@@ -1,43 +1,52 @@
 require "game_model"
 
+---@class GameView 
 GameView = {}
 function GameView:new()
     local private = {}
-        private.gameModel = GameModel:new()
+        private.GameModel = GameModel:new()
 
-        function private:calculateNewCoords(x, y, direction)
-            local newX, newY
+        ---высчитывание новых координат кристалла на основе его текущих координат и направления
+        ---@param x integer текущая x-координата кристалла
+        ---@param y integer текущая y-координата кристалла
+        ---@param direction string направление движения кристалла (l-left, r-right, u-up, d-down)
+        ---@return integer, integer #новая x-координата кристалла, новая y-координата кристалла
+        function private:calculate_new_coords(x, y, direction)
+            local new_x, new_y
             if direction == "r" then
-                newX = x+1
-                newY = y
+                new_x = x+1
+                new_y = y
             elseif direction == "l" then
-                newX = x-1
-                newY = y
+                new_x = x-1
+                new_y = y
             elseif direction == "u" then
-                newX = x
-                newY = y-1
+                new_x = x
+                new_y = y-1
             elseif direction == "d" then
-                newX = x
-                newY = y+1
+                new_x = x
+                new_y = y+1
             end
-            return newX, newY
+            return new_x, new_y
         end
 
+        --- обработка метода tick модели и вывод на экран обновленного поля
         function private:processTick()
             local removed = true
             while true do
-                removed = private.gameModel:tick()
+                removed = private.GameModel:tick()
                 if removed == true then
-                    private.gameModel:dump()
+                    private.GameModel:dump()
                 else
                     break
                 end
             end
         end
+
     local public = {}
         function public:run()
-            private.gameModel:init()
-            private.gameModel:dump()
+            -- первичная иницализация и вывод
+            private.GameModel:init()
+            private.GameModel:dump()
             while true do
                     io.write("> ")
                     local input = io.read()
@@ -45,22 +54,23 @@ function GameView:new()
                         print("Thanks for playing!")
                         break
                     end
-  
+
+                    -- проверка на валидность введеной команды
                     local x, y, direction = input:match("m (%d) (%d) ([lrud])")
                     if x and y and direction then
                         x, y = tonumber(x+1), tonumber(y+1)
-                        local newX, newY = private:calculateNewCoords(x,y,direction)
+                        local newX, newY = private:calculate_new_coords(x,y, direction)
 
-                        local moveResult = private.gameModel:move({x=x, y=y}, {x=newX, y=newY})
-                        if moveResult == 1 then
+                        local move_result = private.GameModel:move({x=x, y=y}, {x=newX, y=newY})
+                        if move_result == 1 then
                             print("The changes will not result in a combination")
-                        elseif moveResult ==2  then
+                        elseif move_result ==2  then
                             print("Error:going outside the board")
-                        end 
+                        end
  
                         private:processTick()
 
-                        if private.gameModel:mix() then
+                        if private.GameModel:mix() then
                             print("There are no possible moves. Shuffle the board...")
                         end
                     else

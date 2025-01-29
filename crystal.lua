@@ -1,3 +1,4 @@
+---@class Crystal
 local Crystal = {}
 Crystal.__index = Crystal
 
