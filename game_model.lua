@@ -7,46 +7,58 @@ function GameModel:new()
         private.size = 10
         private.colors = {"A", "B", "C", "D", "E", "F"} -- Возможные цвета кристаллов
 
-        -- проверка на корректность координат для перемещения
+        --- проверка на корректность координат для перемещения
+        --- @param old_coordinate integer текущая координата x или y кристалла
+        --- @param new_oordinate integer новая координата x или y кристалла
+        --- @return boolean #true в случае корректности, #false в случае ошибки
         function private:coordinates_validation(old_coordinate, new_oordinate)
             if math.abs(old_coordinate-new_oordinate)>1 or
             new_oordinate > private.size or
             new_oordinate < 1 or
             old_coordinate > private.size or
             old_coordinate < 1 then
-                return false --возвращаем false, если данные некорректны
+                return false
             else
-                return true --если все хорошо, возвращаем true
+                return true
             end
         end
 
-        -- пометка последовательностей кристаллов для удаления
-        function private:check_row_matches(crystals, mark_crystals_to_remove)
-            local has_matches = false --нашли ли последовательности кристаллов
+        --- проврека массива на наличие последовательности одинаковых кристаллов
+        --- @param crystals crystal[] одномерный массив строки/столбца кристаллов
+        --- @param mark_crystals_to_remove boolean если true, метод также помечает кристаллы для удаления
+        --- @return boolean #true при наличии последовательности, false в противном случае
+        function private:check_array_matches(crystals, mark_crystals_to_remove)
+            local has_matches = false -- переменная для проверки наличия совпадений
 
             for i = 1, private.size-2 do
+                -- переведение цветов в одинаковый формат
                 local color_1 = string.gsub(crystals[i].color, "%s", "")
                 local color_2 = string.gsub(crystals[i+1].color, "%s", "")
                 local color_3 = string.gsub(crystals[i+2].color, "%s", "")
-
+                
+                -- проверка на совпадение цветов
                 if color_1 == color_2 and color_1 == color_3 then
+                    -- пометка кристаллов для удаления
                     if mark_crystals_to_remove == true then
                         crystals[i].to_remove = true
                         crystals[i+1].to_remove = true
                         crystals[i+2].to_remove = true
                     end
+                    -- фиксация наличия совпадений и выход из метода, если нет необходимости в удалении кристаллов
                     has_matches = true
                     if mark_crystals_to_remove == false then
-                        return true
+                        return has_matches
                     end
+
+                    -- исследование массива на продолжнение последовательности
                     local index = i+2
                     while true do
-                        -- Если индекс вышел за пределы массива, или уже отработал на последнем элементе, выходим
+                        -- выход из цикла, если достигнут конец массива
                         if index >= private.size then
                             break;
                         end
 
-                        -- Иначе увеличиваем индекс и сравниваем следующий элемент с первым. Если у них один цвет, помечаем его как поддежащий удалению
+                        -- увеличение инекс массива и сравнение его с первым на предмет продолжения последовательности
                         index = index + 1;
                         local color_with_index = string.gsub(crystals[index].color, "%s", "")
                         if color_with_index == color_1 then
@@ -57,26 +69,28 @@ function GameModel:new()
                     end
                 end
             end
-            return has_matches  --возвращаем, нашли ли последовательности кристаллов
+            -- возвращение результата проверки на наличие последовательности
+            return has_matches
         end
 
-        -- проверка наличия последовательностей кристаллов
+        --- проверка наличия последовательностей одинаковых кристаллов во всем массиве
+        --- @return boolean #true при наличии последовательности, false в противном случае
         function private:check_matches()
             local has_matches = false
-            -- Проверяем строки
+            -- проверка строк
             for i = 1, private.size do
-                if private:check_row_matches(private.board[i], false) then
+                if private:check_array_matches(private.board[i], false) then
                     return true
                 end
             end
 
-                -- Проверяем столбцы
+                -- проверка столбцов
                 for j = 1, private.size do
                     local column = {}
                     for i = 1, private.size do
                         table.insert(column, private.board[i][j])
                     end
-                    if private:check_row_matches(column, false) then
+                    if private:check_array_matches(column, false) then
                         return true
                     end
                 end
@@ -84,15 +98,22 @@ function GameModel:new()
             return has_matches
         end
 
+        --- проверка на наличие последовательности одинаковых кристаллов после перемещения
+        --- @param x1 integer координата x, на которой находился кристалл
+        --- @param y1 integer координата y, на которой находился кристалл
+        --- @param x2 integer координата x, куда перемещается кристалл
+        --- @param y2 integer координата y, куда перемешается кристалл
+        --- @return boolean #true, если после перемещения есть последовательности кристаллов, false в противном
         function private:has_matches_after_swap(x1, y1, x2, y2)
-            -- Меняем два кристалла местами
+            -- передвижение кристаллов
             private.board[y1][x1], private.board[y2][x2] = private.board[y2][x2], private.board[y1][x1]
 
-            -- Проверяем строки и столбцы на наличие троек
-            local match_found = false
-            match_found = private:check_row_matches(private.board[y1], false)
-            if not match_found then match_found = private:check_row_matches(private.board[y2], false) end
-
+            -- проверка строк на наличие последовательности
+            local match_found = private:check_array_matches(private.board[y1], false)
+            if not match_found then 
+                match_found = private:check_array_matches(private.board[y2], false)
+            end
+            -- проверка столбцов на наличие последовательности
             if not match_found then
                 local column_x1 = {}
                 local column_x2 = {}
@@ -100,38 +121,39 @@ function GameModel:new()
                     table.insert(column_x1, private.board[i][x1])
                     table.insert(column_x2, private.board[i][x2])
                 end
-                match_found = private:check_row_matches(column_x1, false)
+                match_found = private:check_array_matches(column_x1, false)
                 if not match_found then
-                    match_found = private:check_row_matches(column_x2, false)
+                    match_found = private:check_array_matches(column_x2, false)
                 end
             end
 
-            -- Меняем кристаллы обратно
+            -- возвращение кристаллов обратно
             private.board[y1][x1], private.board[y2][x2] = private.board[y2][x2], private.board[y1][x1]
             return match_found
         end
 
-        -- проверка наличия возможных ходов
+        --- проверка наличия возможных ходов
+        --- @return boolean #true, если есть возможные ходы, false в противном случае
         function private:check_possible_turns()
-            -- Проверяем каждую ячейку и возможные ходы
+            -- проверка возможных ходов для каждой ячейки
             for y = 1, private.size do
                 for x = 1, private.size do
-                    -- Проверяем вправо
+                    -- проверка хода вправо
                     if x < private.size and private:has_matches_after_swap(x, y, x + 1, y) then
-                        return true -- Найден возможный ход
+                        return true -- найден возможный ход
                     end
-                    -- Проверяем вниз
+                    -- проверка хода вниз
                     if y < private.size and private:has_matches_after_swap(x, y, x, y + 1) then
-                        return true -- Найден возможный ход
+                        return true -- найден возможный ход
                     end
                 end
             end
 
-            return false -- Ходов не осталось
+            return false -- ходов не осталось
         end
 
     local public = {}
-        -- инициализация игрового поля
+        --- генерация и первичное перемешивание игрового поля
         function public:init()
             for i = 1, private.size do
                 private.board[i] = {}
@@ -142,93 +164,97 @@ function GameModel:new()
             public:mix()
         end
 
-        -- вывод игрового поля
+        --- печать игрового поля в консоль
         function public:dump()
             io.write("    ")
             for x = 0, private.size-1 do
-                io.write(x .. " ") -- Выводим номера столбцов сверху
+                io.write(x .. " ") -- вывод номеров столбцов сверху
             end
-            print("\n    " .. string.rep("- ", private.size)) -- Отделяем заголовок горизонтальной линией
+            print("\n    " .. string.rep("- ", private.size)) -- отделение заголовка горизонтальной линией
             for i = 1, private.size do
-                io.write(string.format("%d", i-1) .. " | ") -- Выводим номер строки слева
+                io.write(string.format("%d", i-1) .. " | ") -- вывод номера строки слева
                 for j = 1, private.size do
-                    io.write(private.board[i][j].color .. " ") -- Выводим цвет каждого кристалла в строке
+                    io.write(private.board[i][j].color .. " ") -- вывод цвета каждого кристалла в строке
                 end
-                print() -- Переход на новую строку после вывода всей строки
+                print() -- переход на новую строку после вывода всей строки
             end
         end
 
-       -- обработка перемещения кристалла. 
-       -- в случае успеха функция возвразает 0
-       -- если в результате перемещения не образуется комбинация - 1
-       -- если координаты переданы неправильно - 2
+       --- обработка перемещения кристалла. 
+       --- @param from {x:integer, y:integer} координаты ячейки, из которой перемещается кристалл
+       --- @param to {x:integer, y:integer} координаты ячейкм, в которую перемешается кристалл
+       --- @return integer 0 при успешном перемещении, 1 при невозможности получить комбинацию при перемещении, 2 при неправильных координатах
         function public:move(from, to)
             local from_x, from_y, to_x, to_y = from.x, from.y, to.x, to.y
-            if private:coordinates_validation(from_x, to_x) and private:coordinates_validation(from_y, to_y) then -- проверяем корректность координат
+            if private:coordinates_validation(from_x, to_x) and private:coordinates_validation(from_y, to_y) then -- проверка корректности координат
                 if private:has_matches_after_swap(from_x, from_y, to_x, to_y) then
-                    private.board[from_y][from_x], private.board[to_y][to_x] = private.board[to_y][to_x], private.board[from_y][from_x] -- меняем элементы местами
+                    private.board[from_y][from_x], private.board[to_y][to_x] = private.board[to_y][to_x], private.board[from_y][from_x] -- перемещение кристаллов
                     return 0
                 else
-                    return 1
+                    return 1 -- комбинацию получить невозможно
                 end
             else
-                return 2
+                return 2 -- введены некорректные данные
             end
         end
 
-        -- проверка и удаление троек, обработка падения кристаллов
+        --- проверка и удаление троек, обработка падения кристаллов
+        --- @return boolean #true при наличии изменений, #false при отсутствии изменений
         function public:tick()
             local removed = false
 
-            -- Помечаем все кристаллы, которые должны быть удалены
+            -- выставление флагов кристаллам для удаления
+
+            -- проверка строк
             for i = 1, private.size do
-                private:check_row_matches(private.board[i], true) -- Проверяем строки
+                private:check_array_matches(private.board[i], true) 
             end
+            -- проверка столбцов
             for j = 1, private.size do
                 local column = {}
                 for i = 1, private.size do
-                    table.insert(column, private.board[i][j]) -- Собираем столбец
+                    table.insert(column, private.board[i][j]) -- сборка столбца
                 end
-                private:check_row_matches(column, true) -- Проверяем столбцы
+                private:check_array_matches(column, true) -- проверка столбца
             end
 
-            -- Удаляем помеченные кристаллы и сдвигаем оставшиеся вниз
+            -- удаление нужных кристаллов и "падение" оставшиеся вниз
             for j = 1, private.size do
-                local empty_slots = 0 -- Счетчик пустых ячеек в столбце
+                local empty_slots = 0 -- счетчик пустых ячеек в столбце
       
-                -- Обрабатываем столбец снизу вверх
+                -- обработка столбца снизу вверх
                 for i = private.size, 1, -1 do
                     if private.board[i][j].to_remove then
-                        removed = true -- Если нашли кристалл для удаления, отмечаем, что произошло изменение
+                        removed = true -- отметка, что произошло удаление
                         empty_slots = empty_slots + 1
-                        private.board[i][j] = nil -- Удаляем кристалл
+                        private.board[i][j] = nil
                     elseif empty_slots > 0 then
-                        -- Сдвигаем кристалл вниз на количество пустых ячеек
+                        -- сдвиг кристалла вниз на количество пустых ячеек
                         private.board[i + empty_slots][j] = private.board[i][j]
                         private.board[i][j] = nil
                     end
                 end
         
-                -- Шаг 3: Заполняем верхние пустые ячейки новыми кристаллами
+                -- заполнение верхних пустых ячеек новыми кристаллами
                 for i = 1, empty_slots do
                     private.board[i][j] = crystal:new(private.colors[math.random(#private.colors)])
                 end
             end
         
-            -- Сбрасываем флаги `to_remove` у всех кристаллов
+            -- сброс флаги `to_remove` у всех кристаллов
             for i = 1, private.size do
                 for j = 1, private.size do
                     private.board[i][j].to_remove = false
                 end
             end
         
-            return removed -- Возвращаем true, если были изменения
+            return removed -- возвращение флага удаления
         end
 
-        -- перемешивание поля, пока не появятся возможные ходы
+        --- перемешивание поля
         function public:mix()
-            local mixed = false
-            local flat_board = {}
+            local mixed = false -- флаг перемешивания
+            local flat_board = {} -- временный массив для записи всех элементов на поле
 
             for i = 1, private.size do
                 for j = 1, private.size do
@@ -236,23 +262,24 @@ function GameModel:new()
                 end
             end
 
-            while private:check_matches() == true or private:check_possible_turns() == false do
-                -- Убираем пометки "to_remove"
+            while private:check_matches() == true or private:check_possible_turns() == false do -- цикл выполняется до тех пор, пока на поле есть последовательности одинаковых кристаллов или нет возможных ходов
+                mixed = true
+
+                -- снятие пометок `to_remove`
                 for i = 1, private.size do
                     for j = 1, private.size do
                         private.board[i][j].to_remove = false
                     end
                 end
 
-                mixed = true
 
-                -- Перемешиваем массив
+                -- перемешивание массива
                 for i = #flat_board, 2, -1 do
                     local j = math.random(i)
                     flat_board[i], flat_board[j] = flat_board[j], flat_board[i]
                 end
 
-                -- Заполняем поле заново
+                -- заполнение поля заново
                 local index = 1
                 for i = 1, private.size do
                     for j = 1, private.size do
