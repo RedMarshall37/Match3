@@ -10,7 +10,7 @@ function GameModel:new()
         --- проверка на корректность координат для перемещения
         --- @param old_coordinate integer текущая координата x или y кристалла
         --- @param new_oordinate integer новая координата x или y кристалла
-        --- @return boolean #true в случае корректности, #false в случае ошибки
+        --- @return boolean #true в случае корректности, false в случае ошибки
         function private:coordinates_validation(old_coordinate, new_oordinate)
             if math.abs(old_coordinate-new_oordinate)>1 or
             new_oordinate > private.size or
@@ -195,7 +195,7 @@ function GameModel:new()
         end
 
         --- проверка и удаление повторяющихся последовательностей, обработка падения кристаллов
-        --- @return boolean #true при наличии изменений, #false при отсутствии изменений
+        --- @return boolean #true при наличии изменений, false при отсутствии изменений
         function public:tick()
             local removed = false
             -- проверка строк
