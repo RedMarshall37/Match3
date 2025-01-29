@@ -262,7 +262,6 @@ function GameModel:new()
             end
 
             while private:check_matches() == true or private:check_possible_turns() == false do -- цикл выполняется до тех пор, пока на поле есть последовательности одинаковых кристаллов или нет возможных ходов
-                print("iteration")
                 mixed = true
                 for x = 1, private.size do
                     for y = 1, private.size do
