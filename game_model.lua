@@ -36,7 +36,6 @@ function GameModel:new()
                 local color_2 = string.gsub(crystals[i+1].color, "%s", "")
                 local color_3 = string.gsub(crystals[i+2].color, "%s", "")
                 
-                -- проверка на совпадение цветов
                 if color_1 == color_2 and color_1 == color_3 then
                     -- пометка кристаллов для удаления
                     if mark_crystals_to_remove == true then
@@ -53,12 +52,10 @@ function GameModel:new()
                     -- исследование массива на продолжнение последовательности
                     local index = i+2
                     while true do
-                        -- выход из цикла, если достигнут конец массива
                         if index >= private.size then
                             break;
                         end
 
-                        -- увеличение инекс массива и сравнение его с первым на предмет продолжения последовательности
                         index = index + 1;
                         local color_with_index = string.gsub(crystals[index].color, "%s", "")
                         if color_with_index == color_1 then
@@ -69,7 +66,6 @@ function GameModel:new()
                     end
                 end
             end
-            -- возвращение результата проверки на наличие последовательности
             return has_matches
         end
 
@@ -140,16 +136,16 @@ function GameModel:new()
                 for x = 1, private.size do
                     -- проверка хода вправо
                     if x < private.size and private:has_matches_after_swap(x, y, x + 1, y) then
-                        return true -- найден возможный ход
+                        return true
                     end
                     -- проверка хода вниз
                     if y < private.size and private:has_matches_after_swap(x, y, x, y + 1) then
-                        return true -- найден возможный ход
+                        return true 
                     end
                 end
             end
 
-            return false -- ходов не осталось
+            return false
         end
 
     local public = {}
@@ -170,13 +166,13 @@ function GameModel:new()
             for x = 0, private.size-1 do
                 io.write(x .. " ") -- вывод номеров столбцов сверху
             end
-            print("\n    " .. string.rep("- ", private.size)) -- отделение заголовка горизонтальной линией
+            print("\n    " .. string.rep("- ", private.size))
             for i = 1, private.size do
                 io.write(string.format("%d", i-1) .. " | ") -- вывод номера строки слева
                 for j = 1, private.size do
                     io.write(private.board[i][j].color .. " ") -- вывод цвета каждого кристалла в строке
                 end
-                print() -- переход на новую строку после вывода всей строки
+                print()
             end
         end
 
@@ -198,13 +194,10 @@ function GameModel:new()
             end
         end
 
-        --- проверка и удаление троек, обработка падения кристаллов
+        --- проверка и удаление повторяющихся последовательностей, обработка падения кристаллов
         --- @return boolean #true при наличии изменений, #false при отсутствии изменений
         function public:tick()
             local removed = false
-
-            -- выставление флагов кристаллам для удаления
-
             -- проверка строк
             for i = 1, private.size do
                 private:check_array_matches(private.board[i], true) 
@@ -218,14 +211,14 @@ function GameModel:new()
                 private:check_array_matches(column, true) -- проверка столбца
             end
 
-            -- удаление нужных кристаллов и "падение" оставшиеся вниз
+            -- удаление отмеченных кристаллов и "падение" оставшиеся вниз
             for j = 1, private.size do
                 local empty_slots = 0 -- счетчик пустых ячеек в столбце
       
                 -- обработка столбца снизу вверх
                 for i = private.size, 1, -1 do
                     if private.board[i][j].to_remove then
-                        removed = true -- отметка, что произошло удаление
+                        removed = true
                         empty_slots = empty_slots + 1
                         private.board[i][j] = nil
                     elseif empty_slots > 0 then
@@ -248,12 +241,12 @@ function GameModel:new()
                 end
             end
         
-            return removed -- возвращение флага удаления
+            return removed
         end
 
         --- перемешивание поля
         function public:mix()
-            local mixed = false -- флаг перемешивания
+            local mixed = false
             local flat_board = {} -- временный массив для записи всех элементов на поле
 
             for i = 1, private.size do
