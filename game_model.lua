@@ -255,30 +255,23 @@ function GameModel:new()
                 end
             end
 
+            local function isSafeToPlace(x, y, color)
+                -- Проверка, не создаст ли этот цвет тройку в строке или столбце
+                return not ((x > 2 and string.gsub(private.board[y][x-1].color, "%s", "") == color and string.gsub(private.board[y][x-2].color, "%s", "") == color) or
+                            (y > 2 and string.gsub(private.board[y-1][x].color, "%s", "") == color and string.gsub(private.board[y-2][x].color, "%s", "") == color))
+            end
+
             while private:check_matches() == true or private:check_possible_turns() == false do -- цикл выполняется до тех пор, пока на поле есть последовательности одинаковых кристаллов или нет возможных ходов
+                print("iteration")
                 mixed = true
-
-                -- снятие пометок `to_remove`
-                for i = 1, private.size do
-                    for j = 1, private.size do
-                        private.board[i][j].to_remove = false
-                    end
-                end
-
-
-                -- перемешивание массива
-                for i = #flat_board, 2, -1 do
-                    local j = math.random(i)
-                    flat_board[i], flat_board[j] = flat_board[j], flat_board[i]
-                end
-
-                -- заполнение поля заново
-                local index = 1
-                for i = 1, private.size do
-                    
-                    for j = 1, private.size do
-                        private.board[i][j] = flat_board[index]
-                        index = index + 1
+                for x = 1, private.size do
+                    for y = 1, private.size do
+                        local randomIndex
+                        repeat
+                                randomIndex = math.random(1, #flat_board)
+                        until isSafeToPlace(x, y, flat_board[randomIndex].color)
+                        private.board[y][x] = flat_board[randomIndex];
+                        table.remove(flat_board, randomIndex)
                     end
                 end
             end
