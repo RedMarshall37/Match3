@@ -233,14 +233,6 @@ function GameModel:new()
                     private.board[i][j] = crystal:new(private.colors[math.random(#private.colors)])
                 end
             end
-        
-            -- сброс флаги `to_remove` у всех кристаллов
-            for i = 1, private.size do
-                for j = 1, private.size do
-                    private.board[i][j].to_remove = false
-                end
-            end
-        
             return removed
         end
 
